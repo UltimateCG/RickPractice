@@ -3,60 +3,44 @@ package com.example.rickproject
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.rickproject.navigation.Screen
+import com.example.rickproject.presentation.view.CharacterDetail
+import com.example.rickproject.presentation.view.CharactersScreen
 import com.example.rickproject.presentation.viewmodels.CharactersViewModel
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CharactersScreen()
+            AppNavigation()
         }
     }
 }
 
 @Composable
-fun CharactersScreen(vm: CharactersViewModel = viewModel()){
+fun AppNavigation() {
+    val navController = rememberNavController()
 
-    val characters by vm.characters.collectAsState(initial = emptyList())
-
-    LaunchedEffect(Unit) {
-        vm.fetchCharacters()
-    }
-
-    LazyColumn {
-        items(characters){
-            character ->
-            Row(verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(8.dp)){
-                AsyncImage(
-                    model = character.image,
-                    contentDescription = character.name,
-                    modifier = Modifier.size(72.dp),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(character.name, fontSize = 18.sp)
+    NavHost(
+        navController = navController,
+        startDestination = Screen.List.route
+    ) {
+        composable(Screen.List.route) {
+            val vm: CharactersViewModel = viewModel()
+            CharactersScreen(navController, vm)
+        }
+        composable(Screen.Detail.route) { backStackEntry ->
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Screen.List.route)
             }
+            val vm: CharactersViewModel = viewModel(parentEntry)
+            CharacterDetail(vm)
         }
     }
 }

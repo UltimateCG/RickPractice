@@ -12,13 +12,31 @@ class CharactersViewModel: ViewModel() {
     private val repo = CharacterRepository()
     //Puede cambiar su valor
     private val _characters = MutableStateFlow<List<Character>>(emptyList()) //Valor Inicial: Lista vacía
+    private val _selectedCharacter = MutableStateFlow<Character?>(null) //Valor inicial: Null
     //Se asigna a una variable de solo lectura
     val characters: StateFlow<List<Character>> = _characters
+    val selectedCharacter: StateFlow<Character?> = _selectedCharacter
 
-    fun fetchCharacters(){
+    private var currentPage = 1
+    private var isLoading = false
+
+    fun loadNext() {
+        //Si está cargando, devuelve para evitar spam de solicitudes
+        if (isLoading) return
         viewModelScope.launch {
-            //Se llama a la funcion del reository y actualiza el Stateflow
-            _characters.value = repo.getCharacters()
+
+            isLoading = true //Define el estado de carga verdadero para que se efectue la primera condicion
+            val newCharacters = repo.getCharacters(currentPage)
+            _characters.value += newCharacters //A medida que se cargan personajes de otras páginas, se añaden a la lista total
+
+            currentPage ++
+
+            isLoading = false
         }
     }
+
+    fun selectCharacter(character: Character) {
+        _selectedCharacter.value = character
+    }
+
 }
